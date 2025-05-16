@@ -15,10 +15,12 @@ export default function Game({
   animation,
   setAnimation,
   soundEffects,
-  setSoundEffects
+  setSoundEffects,
 }) {
   const [player, setPlayer] = useState("Player: X");
-  
+
+  let winState = false;
+
   const [grid, setGrid] = useState([
     ["", "", ""],
     ["", "", ""],
@@ -26,35 +28,39 @@ export default function Game({
   ]);
 
   if (single) {
-    console.log("Single Player Mode");
+    // console.log("Single Player Mode");
   } else {
-    console.log("Two player Mode");
+    // console.log("Two player Mode");
   }
-
 
   let scores = {
     X: 1,
     O: -1,
     tie: 0,
-  }
-
-  const minimax = (newGrid,) => {
-   let result = checkWinner(newGrid, "AI");
-
   };
 
-  const aiPosition = (newGrid, depth, isMaximising) => {
+  const minimax = (newGrid, depth, isMaximising) => {
+    let result = checkWinner(newGrid, "AI");
+    console.log(`line 44: ${result}`);
+    // if (result == false) {
+
+    // }
+    return 1;
+  };
+
+  const aiPosition = (Grid, depth, isMaximising) => {
     let bestScore = -Infinity;
-    let bestMove;
+    let bestMove = [0, 0];
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        if (grid[i][j] === "") {
-          newGrid[i][j] = "O";
-          let score = minimax(grid,0, true);
-          newGrid[i][j] = "";
+        if (Grid[i][j] === "") {
+          Grid[i][j] = "O";
+          let score = minimax(Grid, 0, false);
+          Grid[i][j] = "";
           if (score > bestScore) {
             bestScore = score;
+            console.log("line: 61( i: " + i + " j: " + j + ")");
             bestMove = [i, j];
           }
         }
@@ -62,12 +68,14 @@ export default function Game({
     }
     console.log("Best Move: " + bestMove);
     return bestMove;
+    // return bestMove;
   };
 
   const Press = (event, row, col) => {
     if (winState == true) {
-      newGame();
-      return;
+      console.log("Game Over");
+      // newGame();
+      // return;
     }
 
     if (single) {
@@ -77,7 +85,7 @@ export default function Game({
           setGrid((prevGrid) => {
             const newGrid = prevGrid.map((r) => [...r]); // Copy grid
             newGrid[row][col] = "X";
-            checkWinner(newGrid, "Player X");
+            winState = checkWinner(newGrid, "Player X");
             return newGrid;
           });
           setPlayer("Player: O");
@@ -85,7 +93,7 @@ export default function Game({
           setGrid((prevGrid) => {
             const newGrid = prevGrid.map((r) => [...r]); // Copy grid
             newGrid[row][col] = "O";
-            checkWinner(newGrid, "Player O");
+            winState = checkWinner(newGrid, "Player O");
             return newGrid;
           });
           setPlayer("Player: X");
@@ -105,11 +113,11 @@ export default function Game({
         setGrid((prev) => {
           const newGrid = prev.map((r) => [...r]);
           newGrid[row][col] = "X";
-          checkWinner(newGrid, "Player");
+          winState = checkWinner(newGrid, "Player");
           // now AI move
-          const [r, c] = aiPosition(newGrid);
+          const [r, c] = aiPosition(newGrid, 0, true); // Check winner is alresady in the aiPosition function
           // console.log("AI Move: " + r + " " + c);
-          // newGrid[r][c] = "O";
+          newGrid[r][c] = "O";
           // checkWinner(newGrid, "AI");
           return newGrid;
         });
@@ -121,7 +129,6 @@ export default function Game({
           console.log("Click another cell");
         }
       }
-
     }
   };
 
@@ -129,7 +136,7 @@ export default function Game({
     // console.log("Checking for winner");
     // Check
     // console.log(` Type of Grid: ${typeof newGrid}`);
-    let winner = false;
+    let winner;
     for (let i = 0; i < 3; i++) {
       // console.log(newGrid[i][0]);
       if (
@@ -138,7 +145,8 @@ export default function Game({
         newGrid[i][1] === newGrid[i][2]
       ) {
         // console.log("Row win detected");
-        winner = true;
+        // winner = true;
+        return true;
       }
     }
     // Check columns
@@ -150,7 +158,8 @@ export default function Game({
       ) {
         // console.log("Column win detected");
 
-        winner = true;
+        // winner = true;
+        return true;
       }
     }
 
@@ -162,7 +171,8 @@ export default function Game({
     ) {
       console.log("Diagonal win detected");
 
-      winner = true;
+      // winner = true;
+      return true;
     }
     if (
       newGrid[0][2] !== "" &&
@@ -170,7 +180,16 @@ export default function Game({
       newGrid[1][1] === newGrid[2][0]
     ) {
       console.log("Diagonal win detected");
-      winner = true;
+      // winner = true;
+      return true;
+    }
+
+    for(let i = 0; i < 3; i++){
+      for(let j = 0; j < 3; j++){
+        if(newGrid[i][j]){
+          winner = false;
+        }
+      }
     }
 
     if (winner) {
@@ -277,22 +296,6 @@ export default function Game({
     </View>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const styles = StyleSheet.create({
   container: {
