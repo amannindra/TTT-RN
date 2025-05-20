@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Alert, TouchableOpacity } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
@@ -6,6 +6,8 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { useState } from "react";
 import { Button } from "react-native";
 import { route } from "@react-navigation/native";
+
+
 
 
 export default function Home({
@@ -60,6 +62,8 @@ export default function Home({
     console.log("Updating to Two player Mode")
     navigation.navigate("Game");
   };
+
+  
 
   return (
     <>

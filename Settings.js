@@ -59,7 +59,12 @@ export default function Settings({
   setAnimation,
   soundEffects,
   setSoundEffects,
+  soundRef,
+  audi,
+  startAudio,
+  stopAudio,
 }) {
+
 
   const changeDarkMode = () => {
     setDarkMode(!darkMode);
@@ -68,6 +73,7 @@ export default function Settings({
   const changeSoundEffects = () => {
     setSoundEffects(!soundEffects);
     console.log(`Sound Effects: ${!soundEffects}`);
+   
   };
   const changeAnimation = () => {
     setAnimation(!animation);

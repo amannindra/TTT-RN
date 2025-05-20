@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Alert, TouchableOpacity } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Button } from "react-native";
 import { route } from "@react-navigation/native";
@@ -17,9 +17,8 @@ export default function Game({
   soundEffects,
   setSoundEffects,
 }) {
-  const [player, setPlayer] = useState("Player: X");
-
-  let winState = false;
+  const [player, setPlayer] = useState("X");
+  const [winState, setWinState] = useState(false);
 
   const [grid, setGrid] = useState([
     ["", "", ""],
@@ -27,186 +26,207 @@ export default function Game({
     ["", "", ""],
   ]);
 
-  if (single) {
-    // console.log("Single Player Mode");
-  } else {
-    // console.log("Two player Mode");
-  }
 
-  let scores = {
-    X: 1,
-    O: -1,
-    tie: 0,
-  };
 
-  const minimax = (newGrid, depth, isMaximising) => {
-    let result = checkWinner(newGrid, "AI");
-    console.log(`line 44: ${result}`);
-    // if (result == false) {
-
-    // }
-    return 1;
-  };
-
-  const aiPosition = (Grid, depth, isMaximising) => {
-    let bestScore = -Infinity;
-    let bestMove = [0, 0];
-
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (Grid[i][j] === "") {
-          Grid[i][j] = "O";
-          let score = minimax(Grid, 0, false);
-          Grid[i][j] = "";
-          if (score > bestScore) {
-            bestScore = score;
-            console.log("line: 61( i: " + i + " j: " + j + ")");
-            bestMove = [i, j];
-          }
-        }
-      }
-    }
-    console.log("Best Move: " + bestMove);
-    return bestMove;
-    // return bestMove;
-  };
 
   const Press = (event, row, col) => {
+    // console.log(`Line 76: WinState: ${winState}`);
     if (winState == true) {
-      console.log("Game Over");
-      // newGame();
-      // return;
+      console.log("Line 75: Game Over");
+      newGame();
+      return;
     }
 
-    if (single) {
+    if (single) { // Two player mode 
       if (grid[row][col] === "") {
-        console.log("Going in Player if statement");
-        if (player === "Player: X") {
+        console.log("Line 84: Going in Player if statement: " + player);
+        if (player === "X") {
           setGrid((prevGrid) => {
-            const newGrid = prevGrid.map((r) => [...r]); // Copy grid
+            const newGrid = prevGrid.map((r) => [...r]);
             newGrid[row][col] = "X";
-            winState = checkWinner(newGrid, "Player X");
+            setWinState(checkWinner(newGrid, "X"));
             return newGrid;
           });
           setPlayer("Player: O");
         } else if (player === "Player: O") {
           setGrid((prevGrid) => {
-            const newGrid = prevGrid.map((r) => [...r]); // Copy grid
+            const newGrid = prevGrid.map((r) => [...r]);
             newGrid[row][col] = "O";
-            winState = checkWinner(newGrid, "Player O");
+            setWinState(checkWinner(newGrid, "O"));
             return newGrid;
           });
-          setPlayer("Player: X");
+          setPlayer("X");
         }
       } else {
-        if (gridFull()) {
+        if (gridFull(grid)) {
           console.log("Grid is full");
-          reset();
+          newGame();
         } else {
-          console.log("Click another cell");
+          // console.log("Click another cell");
         }
       }
-    } else {
-      console.log("Robot Mode in else statement");
+    } else { // Single player mode 
       if (grid[row][col] === "") {
-        console.log("Going in AI if statement");
+        // console.log("Going in AI if statement");
         setGrid((prev) => {
-          const newGrid = prev.map((r) => [...r]);
+          let newGrid = prev.map((r) => [...r]);
           newGrid[row][col] = "X";
-          winState = checkWinner(newGrid, "Player");
-          // now AI move
-          const [r, c] = aiPosition(newGrid, 0, true); // Check winner is alresady in the aiPosition function
-          // console.log("AI Move: " + r + " " + c);
-          newGrid[r][c] = "O";
-          // checkWinner(newGrid, "AI");
+          setWinState(checkWinner(newGrid, "X"));
           return newGrid;
         });
+        console.log("Line 118: Player: X chooses: [" + row + ", " + col + "]");
+        setPlayer("AI");
       } else {
-        if (gridFull()) {
+        if (gridFull(grid)) {
           console.log("Grid is full");
           reset();
         } else {
-          console.log("Click another cell");
+          // console.log("Click another cell");
         }
       }
     }
   };
 
-  const checkWinner = (newGrid, play) => {
-    // console.log("Checking for winner");
-    // Check
-    // console.log(` Type of Grid: ${typeof newGrid}`);
-    let winner;
-    for (let i = 0; i < 3; i++) {
-      // console.log(newGrid[i][0]);
-      if (
-        newGrid[i][0] !== "" &&
-        newGrid[i][0] === newGrid[i][1] &&
-        newGrid[i][1] === newGrid[i][2]
-      ) {
-        // console.log("Row win detected");
-        // winner = true;
-        return true;
+    let scores = {
+      X: -1,
+      O: 1,
+      tie: 0,
+    };
+
+    const minimax = (minimaxGrid, depth, isMaximising) => {
+      if (checkWinner(minimaxGrid, "X")) {
+        return scores.X;
+      } else if (checkWinner(minimaxGrid, "O")) {
+        return scores.O;
+      } else if (gridFull(minimaxGrid)) {
+        return scores.tie;
       }
-    }
-    // Check columns
-    for (let i = 0; i < 3; i++) {
-      if (
-        newGrid[0][i] !== "" &&
-        newGrid[0][i] === newGrid[1][i] &&
-        newGrid[1][i] === newGrid[2][i]
-      ) {
-        // console.log("Column win detected");
+      let bestScore;
 
-        // winner = true;
-        return true;
-      }
-    }
-
-    // Check diagonals
-    if (
-      newGrid[0][0] !== "" &&
-      newGrid[0][0] === newGrid[1][1] &&
-      newGrid[1][1] === newGrid[2][2]
-    ) {
-      console.log("Diagonal win detected");
-
-      // winner = true;
-      return true;
-    }
-    if (
-      newGrid[0][2] !== "" &&
-      newGrid[0][2] === newGrid[1][1] &&
-      newGrid[1][1] === newGrid[2][0]
-    ) {
-      console.log("Diagonal win detected");
-      // winner = true;
-      return true;
-    }
-
-    for(let i = 0; i < 3; i++){
-      for(let j = 0; j < 3; j++){
-        if(newGrid[i][j]){
-          winner = false;
+      if (isMaximising) {
+        // AI's turn
+        bestScore = -Infinity;
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (minimaxGrid[i][j] === "") {
+              minimaxGrid[i][j] = "O";
+              let score = minimax(minimaxGrid, depth + 1, false); // False meaning it's the player's turn
+              minimaxGrid[i][j] = "";
+              bestScore = Math.max(score, bestScore);
+            }
+          }
+        }
+      } else {
+        // This is finding the lowest score for Player's turn
+        bestScore = Infinity;
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (minimaxGrid[i][j] === "") {
+              minimaxGrid[i][j] = "X";
+              let score = minimax(minimaxGrid, depth + 1, true); // True meaning it's the AI's turn
+              minimaxGrid[i][j] = "";
+              bestScore = Math.min(score, bestScore);
+            }
+          }
         }
       }
-    }
+      return bestScore;
+    };
 
-    if (winner) {
-      return true;
+  useEffect(() => {
+    if (player === "AI") {
+      console.log("Line 128(1): AI is playing");
+      aiOutput();
+      setPlayer("X");
     } else {
-      return false;
     }
+  }, [player]);
+
+    const aiPosition = (aiGrid) => {
+      let bestScore = -Infinity;
+      let bestMove = [0, 0];
+
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (aiGrid[i][j] === "") {
+            console.log("Line 163: Choosing best move from non chosen space: [" + i + ", " + j + "]");
+            aiGrid[i][j] = "O";
+            let score = minimax(aiGrid, 0, false); 
+            console.log("Line 167: Score: " + score);
+            aiGrid[i][j] = "";
+            if (score > bestScore) {
+              bestScore = score;
+              console.log("Line 169: Updating position to: [" + i + ", " + j + "] with score: " + score);
+              // console.log("line: 63( i: " + i + " j: " + j + ")");
+              bestMove = [i, j];
+            }
+          }
+        }
+      }
+      console.log("Line 175: Best Move: " + bestMove);
+      return bestMove;
+    };
+
+  const aiOutput = () => {
+    setGrid((prev) => {
+      let aiOutputGrid = prev.map((r) => [...r]); // Copy grid
+      const [r, c] = aiPosition(aiOutputGrid); // Check winner is alresady in the aiPosition function
+      aiOutputGrid[r][c] = "O";
+
+      if (checkWinner(aiOutputGrid, "AI"))
+      {
+        console.log("Line 186: AI wins");
+
+      }
+      else{
+        console.log("Line1 182: AI dosen't win");
+      }
+      setWinState(checkWinner(aiOutputGrid, "AI"));
+      return aiOutputGrid;
+    });
   };
 
-  const gridFull = () => {
+function checkWinner(winnerGrid, player) {
+
+  if(player == "AI"){
+    player = "O";
+  };
+  // Rows, columns, diagonals
+  for (let i = 0; i < 3; i++) {
+    if (
+      winnerGrid[i][0] === player &&
+      winnerGrid[i][1] === player &&
+      winnerGrid[i][2] === player
+    )
+      return true;
+    if (
+      winnerGrid[0][i] === player &&
+      winnerGrid[1][i] === player &&
+      winnerGrid[2][i] === player
+    )
+      return true;
+  }
+  if (
+    winnerGrid[0][0] === player &&
+    winnerGrid[1][1] === player &&
+    winnerGrid[2][2] === player
+  )
+    return true;
+  if (
+    winnerGrid[0][2] === player &&
+    winnerGrid[1][1] === player &&
+    winnerGrid[2][0] === player
+  )
+    return true;
+
+  return false;
+}
+
+  const gridFull = (checkingGrid) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        if (grid[i][j] === "") {
+        if (checkingGrid[i][j] === "") {
           return false;
-        } else {
-          // console.log("Grid is not full");
-          // console.log(`Grid[${i}][${j}] = ${grid[i][j]}`);
         }
       }
     }
@@ -222,8 +242,9 @@ export default function Game({
   };
 
   const newGame = () => {
+    setWinState(false);
     reset();
-    setPlayer("Player: X");
+    setPlayer("X");
   };
 
   const Easy = () => {
@@ -273,7 +294,7 @@ export default function Game({
 
   return (
     <View key="24234" style={styles.container}>
-      <Text key={2} style={styles.title}>
+      <Text key={2} style={[styles.title, styles.topTitle]}>
         Tic Tac Toe
       </Text>
       <View style={styles.playerAndGrid}>
@@ -302,12 +323,14 @@ const styles = StyleSheet.create({
     flex: 2,
     backgroundColor: "white",
     alignItems: "center",
-    marginTop: 50,
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
     alignSelf: "center",
+  },
+  topTitle: {
+    marginTop: 50,
   },
   niceButton: {
     paddingRight: 20,
